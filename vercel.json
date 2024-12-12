@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_AWS_REGION": "@aws_region",
+    "VITE_AWS_ACCESS_KEY_ID": "@aws_access_key_id",
+    "VITE_AWS_SECRET_ACCESS_KEY": "@aws_secret_access_key"
+  }
+}
