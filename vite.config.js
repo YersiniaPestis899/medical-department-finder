@@ -6,10 +6,20 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
+    base: './', // ベースパスの追加
     define: {
       'import.meta.env.AWS_REGION': JSON.stringify(env.AWS_REGION || 'us-west-2'),
       'import.meta.env.AWS_ACCESS_KEY_ID': JSON.stringify(env.AWS_ACCESS_KEY_ID),
       'import.meta.env.AWS_SECRET_ACCESS_KEY': JSON.stringify(env.AWS_SECRET_ACCESS_KEY),
     },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      rollupOptions: {
+        output: {
+          manualChunks: undefined
+        }
+      }
+    }
   };
 });
