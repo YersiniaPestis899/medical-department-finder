@@ -4,26 +4,24 @@ const CLAUDE_MODEL = 'anthropic.claude-3-5-sonnet-20241022-v2:0';
 
 function debugEnvironmentVariables() {
   console.log('Environment Variables Debug:', {
-    REGION: import.meta.env.VITE_AWS_REGION,
-    ACCESS_KEY_EXISTS: !!import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-    SECRET_KEY_EXISTS: !!import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
+    REGION: import.meta.env.AWS_REGION,
+    ACCESS_KEY_EXISTS: !!import.meta.env.AWS_ACCESS_KEY_ID,
+    SECRET_KEY_EXISTS: !!import.meta.env.AWS_SECRET_ACCESS_KEY,
     ALL_ENV: import.meta.env
   });
 }
 
 export async function invokeClaudeModel(prompt) {
-  // 環境変数のデバッグ出力
   debugEnvironmentVariables();
 
-  // リージョンの明示的な設定
-  const region = import.meta.env.VITE_AWS_REGION || 'us-west-2';
+  const region = import.meta.env.AWS_REGION || 'us-west-2';
   console.log('Using AWS Region:', region);
 
   const client = new BedrockRuntimeClient({
     region,
     credentials: {
-      accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-      secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
+      accessKeyId: import.meta.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: import.meta.env.AWS_SECRET_ACCESS_KEY,
     },
   });
 
