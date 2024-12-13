@@ -73,17 +73,17 @@ export function DepartmentResult({ result, onReset }) {
           </div>
         )}
 
-        {/* 保護者向け詳細情報のトグルボタン */}
+        {/* 詳細情報のトグルボタン */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowDetailedInfo(!showDetailedInfo)}
           className="px-4 py-2 mt-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
         >
-          {showDetailedInfo ? '📝 くわしい説明をとじる' : '📝 ほごしゃむけの くわしい せつめいを みる'}
+          {showDetailedInfo ? '📝 くわしい説明をとじる' : '📝 くわしい説明をみる'}
         </motion.button>
 
-        {/* 保護者向け詳細情報 */}
+        {/* 詳細情報 */}
         <AnimatePresence>
           {showDetailedInfo && result.reasoningNotes && (
             <motion.div
@@ -93,7 +93,7 @@ export function DepartmentResult({ result, onReset }) {
               className="mt-4 bg-gray-50 rounded-xl p-6 text-left"
             >
               <h3 className="font-bold text-gray-700 mb-2">
-                医師からの詳しい説明
+                くわしい説明
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 {result.reasoningNotes}
