@@ -4,60 +4,176 @@ export const symptomsData = {
       name: '熱がある',
       kidsFriendlyName: 'ねつがある',
       icon: '🤒',
-      description: '体があたたかい'
+      departments: ['小児科', '内科'],
+      severity: {
+        high: {
+          conditions: ['40度以上の熱', '3日以上続く'],
+          recommendation: '早めの受診をおすすめします',
+        },
+        medium: {
+          conditions: ['38度以上の熱'],
+          recommendation: '様子を見ながら受診を検討してください',
+        },
+        low: {
+          conditions: ['37度台の熱'],
+          recommendation: '経過観察をお願いします',
+        },
+      },
     },
     fatigue: {
       name: 'だるい',
       kidsFriendlyName: 'からだがだるい',
       icon: '😪',
-      description: 'つかれている'
+      departments: ['内科', '小児科'],
+      additionalSymptoms: ['めまい', 'ごはんがたべたくない'],
     },
     headache: {
       name: '頭が痛い',
       kidsFriendlyName: 'あたまがいたい',
       icon: '🤕',
-      description: 'あたまがいたい'
+      departments: ['脳神経外科', '神経内科', '内科'],
+      locations: ['おでこ', 'うしろがわ', 'こめかみ'],
     },
   },
-  respiratory: {
-    cough: {
-      name: '咳が出る',
-      kidsFriendlyName: 'せきがでる',
-      icon: '😷',
-      description: 'せきがでる'
+  skin: {
+    rash: {
+      name: '発疹',
+      kidsFriendlyName: 'ぶつぶつができた',
+      icon: '🔴',
+      departments: ['皮膚科', 'アレルギー科'],
+      description: 'かゆみを伴う発疹',
     },
-    runnyNose: {
-      name: '鼻水が出る',
-      kidsFriendlyName: 'はなみずがでる',
-      icon: '🤧',
-      description: 'はなみずがでる'
+    itching: {
+      name: 'かゆみ',
+      kidsFriendlyName: 'かゆい',
+      icon: '👆',
+      departments: ['皮膚科', 'アレルギー科'],
+      description: '皮膚のかゆみ',
     },
-    breathingDifficulty: {
-      name: '息苦しい',
-      kidsFriendlyName: 'いきがしにくい',
-      icon: '😰',
-      description: 'いきがしにくい'
+    wound: {
+      name: '傷・やけど',
+      kidsFriendlyName: 'けが・やけど',
+      icon: '🤕',
+      departments: ['皮膚科', '形成外科'],
+      description: '皮膚の傷やけが',
     },
   },
-  digestive: {
-    stomachache: {
-      name: 'お腹が痛い',
-      kidsFriendlyName: 'おなかがいたい',
-      icon: '😣',
-      description: 'おなかがいたい'
+  eyes: {
+    pain: {
+      name: '目の痛み',
+      kidsFriendlyName: 'めがいたい',
+      icon: '👁️',
+      departments: ['眼科'],
+      description: '目の痛みや不快感',
     },
-    nausea: {
-      name: '吐き気がする',
-      kidsFriendlyName: 'むねむねする',
-      icon: '🤢',
-      description: 'むねむねする'
+    vision: {
+      name: '見えにくい',
+      kidsFriendlyName: 'みえにくい',
+      icon: '👀',
+      departments: ['眼科'],
+      description: '視力の低下や見づらさ',
     },
-    diarrhea: {
-      name: 'お腹がゆるい',
-      kidsFriendlyName: 'おなかがゆるい',
-      icon: '💩',
-      description: 'おなかがゆるい'
+    redness: {
+      name: '目が赤い',
+      kidsFriendlyName: 'めがあかい',
+      icon: '😢',
+      departments: ['眼科'],
+      description: '目の充血',
     },
-  }
-  // ... 他の症状カテゴリは維持
+  },
+  mental: {
+    anxiety: {
+      name: '不安',
+      kidsFriendlyName: 'しんぱい',
+      icon: '😟',
+      departments: ['心療内科', '精神科'],
+      description: '不安や心配',
+    },
+    sleep: {
+      name: '眠れない',
+      kidsFriendlyName: 'ねむれない',
+      icon: '😴',
+      departments: ['心療内科', '精神科'],
+      description: '睡眠の問題',
+    },
+    mood: {
+      name: '気分の落ち込み',
+      kidsFriendlyName: 'きぶんがわるい',
+      icon: '😢',
+      departments: ['心療内科', '精神科'],
+      description: '気分の変化',
+    },
+  },
+  ears: {
+    pain: {
+      name: '耳の痛み',
+      kidsFriendlyName: 'みみがいたい',
+      icon: '👂',
+      departments: ['耳鼻咽喉科'],
+      description: '耳の痛みや違和感',
+    },
+    hearing: {
+      name: '聞こえにくい',
+      kidsFriendlyName: 'きこえにくい',
+      icon: '🔇',
+      departments: ['耳鼻咽喉科'],
+      description: '聴力の低下',
+    },
+    dizziness: {
+      name: 'めまい',
+      kidsFriendlyName: 'めまい',
+      icon: '😵‍💫',
+      departments: ['耳鼻咽喉科', '神経内科'],
+      description: 'めまいや平衡感覚の異常',
+    },
+  },
+  mouth: {
+    toothache: {
+      name: '歯が痛い',
+      kidsFriendlyName: 'はがいたい',
+      icon: '😬',
+      departments: ['歯科'],
+      description: '歯の痛み',
+    },
+    gums: {
+      name: '歯茎の痛み',
+      kidsFriendlyName: 'はぐきがいたい',
+      icon: '🦷',
+      departments: ['歯科'],
+      description: '歯茎の痛みや腫れ',
+    },
+    soreThroat: {
+      name: '喉が痛い',
+      kidsFriendlyName: 'のどがいたい',
+      icon: '😫',
+      departments: ['耳鼻咽喉科'],
+      description: '喉の痛みや違和感',
+    },
+  },
+  emergency: {
+    chestPain: {
+      name: '胸の痛み',
+      kidsFriendlyName: 'むねがいたい',
+      icon: '💔',
+      departments: ['救急科', '循環器内科'],
+      description: '急な胸の痛み',
+      urgency: 'high',
+    },
+    consciousness: {
+      name: '意識がもうろう',
+      kidsFriendlyName: 'ぼーっとする',
+      icon: '😵',
+      departments: ['救急科', '神経内科'],
+      description: '意識レベルの低下',
+      urgency: 'high',
+    },
+    bleeding: {
+      name: '大きな出血',
+      kidsFriendlyName: 'おおきなけが',
+      icon: '🩹',
+      departments: ['救急科', '外科'],
+      description: '大量出血を伴うけが',
+      urgency: 'high',
+    },
+  },
 };
