@@ -6,11 +6,12 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
-    base: './', // ベースパスの追加
+    base: './',
     define: {
       'import.meta.env.AWS_REGION': JSON.stringify(env.AWS_REGION || 'us-west-2'),
       'import.meta.env.AWS_ACCESS_KEY_ID': JSON.stringify(env.AWS_ACCESS_KEY_ID),
       'import.meta.env.AWS_SECRET_ACCESS_KEY': JSON.stringify(env.AWS_SECRET_ACCESS_KEY),
+      'import.meta.env.VITE_GOOGLE_MAPS_API_KEY': JSON.stringify(env.VITE_GOOGLE_MAPS_API_KEY),
     },
     build: {
       outDir: 'dist',
@@ -20,6 +21,9 @@ export default defineConfig(({ mode }) => {
           manualChunks: undefined
         }
       }
+    },
+    server: {
+      https: true // 開発時もHTTPSを使用
     }
   };
 });
