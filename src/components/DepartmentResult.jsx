@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { HospitalMap } from './HospitalMap';
 
 export function DepartmentResult({ result, onReset }) {
   const [showDetailedInfo, setShowDetailedInfo] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [mapError, setMapError] = useState(null);
 
   const getUrgencyColor = (level) => {
     const colors = {
@@ -40,6 +43,40 @@ export function DepartmentResult({ result, onReset }) {
             </div>
           )}
         </div>
+
+        {/* 病院マップ表示ボタン */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowMap(!showMap)}
+          className="w-full px-4 py-3 bg-green-500 text-white rounded-lg mb-4 font-medium"
+        >
+          {showMap ? '地図を閉じる 🗺️' : '近くの病院を探す 🗺️'}
+        </motion.button>
+
+        {/* エラーメッセージ */}
+        {mapError && (
+          <div className="text-red-500 mb-4 text-sm">
+            {mapError}
+          </div>
+        )}
+
+        {/* 地図コンポーネント */}
+        <AnimatePresence>
+          {showMap && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-4"
+            >
+              <HospitalMap
+                department={result.recommendedDepartment}
+                onError={setMapError}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {result.urgencyLevel && (
           <div className={`rounded-xl p-4 mb-4 ${getUrgencyColor(result.urgencyLevel)}`}>
