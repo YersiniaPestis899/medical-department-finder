@@ -25,17 +25,25 @@ export function HospitalMap({ department, onError }) {
   const [hospitals, setHospitals] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [iOSInstructions, setIOSInstructions] = useState(false);
+
+  // iOS端末の判定
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+                /CriOS/.test(navigator.userAgent); // Chrome for iOSの判定
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
-  // 位置情報の取得
-  useEffect(() => {
-    if (!isLoaded) return;
-
+  const getLocation = useCallback(() => {
     if (navigator.geolocation) {
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      };
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const pos = {
@@ -46,21 +54,38 @@ export function HospitalMap({ department, onError }) {
           setLoading(false);
         },
         (error) => {
-          onError('位置情報の取得に失敗しました: ' + error.message);
-          setLoading(false);
           console.error('Geolocation error:', error);
+          let errorMessage = '';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = isIOS 
+                ? 'この機能には位置情報の許可が必要です。iPhoneの設定から位置情報を許可してください。'
+                : '位置情報の許可が必要です';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = '位置情報を取得できませんでした';
+              break;
+            case error.TIMEOUT:
+              errorMessage = '位置情報の取得がタイムアウトしました';
+              break;
+            default:
+              errorMessage = 'エラーが発生しました: ' + error.message;
+          }
+          onError(errorMessage);
+          setLoading(false);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
+        options
       );
     } else {
       onError('お使いのブラウザは位置情報に対応していません');
       setLoading(false);
     }
-  }, [isLoaded]);
+  }, [isIOS, onError]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    getLocation();
+  }, [isLoaded, getLocation]);
 
   // 病院検索
   const searchNearbyHospitals = useCallback(async () => {
@@ -91,7 +116,7 @@ export function HospitalMap({ department, onError }) {
     }
   }, [currentPosition, searchNearbyHospitals]);
 
-  // エラー処理
+  // エラー処理とローディング表示
   if (loadError) {
     return (
       <div className="text-red-500 p-4 text-center">
@@ -100,7 +125,7 @@ export function HospitalMap({ department, onError }) {
     );
   }
 
-  if (!isLoaded) {
+  if (!isLoaded || loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin text-4xl">🏥</div>
@@ -108,22 +133,45 @@ export function HospitalMap({ department, onError }) {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin text-4xl">🏥</div>
-      </div>
-    );
-  }
-
+  // 位置情報が取得できない場合
   if (!currentPosition) {
     return (
-      <div className="text-center text-red-500 p-4">
-        位置情報を取得できませんでした。
+      <div className="text-center p-4">
+        <p className="text-red-500 mb-4">位置情報を取得できませんでした</p>
+        {isIOS && (
+          <>
+            <button 
+              onClick={() => setIOSInstructions(!iOSInstructions)}
+              className="text-blue-500 underline"
+            >
+              iPhoneでの位置情報の設定方法を見る
+            </button>
+            
+            {iOSInstructions && (
+              <div className="mt-4 text-left bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-bold mb-2">iPhoneでの位置情報設定手順:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li>「設定」アプリを開く</li>
+                  <li>「Chrome」を選択</li>
+                  <li>「位置情報」をタップ</li>
+                  <li>「位置情報を許可」を選択</li>
+                  <li>アプリを再読み込みする</li>
+                </ol>
+                <button 
+                  onClick={getLocation}
+                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded w-full"
+                >
+                  位置情報を再取得する
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     );
   }
 
+  // 地図表示
   return (
     <div className="w-full">
       <h3 className="text-xl font-bold text-purple-600 mb-4">
