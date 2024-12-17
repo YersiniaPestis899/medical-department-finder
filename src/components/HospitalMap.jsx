@@ -19,6 +19,23 @@ const customMarkers = {
   }
 };
 
+// 診療科名のキーワードマッピング
+const getDepartmentKeywords = (department) => {
+  const keywords = {
+    '内科': ['内科', '総合診療科', 'クリニック'],
+    '小児科': ['小児科', '子供', 'こども', 'クリニック'],
+    '外科': ['外科', '総合外科', 'クリニック'],
+    '整形外科': ['整形外科', '整形', 'クリニック'],
+    '眼科': ['眼科', 'アイクリニック', 'クリニック'],
+    '耳鼻科': ['耳鼻科', '耳鼻咽喉科', 'クリニック'],
+    '皮膚科': ['皮膚科', 'スキン', 'クリニック'],
+    '産婦人科': ['産婦人科', '婦人科', '産科', 'クリニック'],
+    '精神科': ['精神科', 'メンタル', 'クリニック'],
+    '歯科': ['歯科', 'デンタル', 'クリニック']
+  };
+  return keywords[department] || [department, 'クリニック', '病院'];
+};
+
 export function HospitalMap({ department, onError }) {
   const mapRef = useRef(null);
   const [currentPosition, setCurrentPosition] = useState(null);
@@ -27,8 +44,9 @@ export function HospitalMap({ department, onError }) {
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState('unknown');
+  const [searchRadius, setSearchRadius] = useState(5000);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // iOS と ブラウザの検出を改善
   const userAgent = navigator.userAgent.toLowerCase();
   const isIOS = /iphone|ipad|ipod/.test(userAgent);
   const isSafari = isIOS && !userAgent.includes('crios') && !userAgent.includes('fxios');
@@ -41,7 +59,6 @@ export function HospitalMap({ department, onError }) {
     libraries,
   });
 
-  // 位置情報の権限チェックを強化
   const checkLocationPermission = useCallback(async () => {
     if (!navigator.permissions) return 'unknown';
     try {
@@ -53,6 +70,60 @@ export function HospitalMap({ department, onError }) {
       return 'unknown';
     }
   }, []);
+
+  const searchHospitalsWithKeywords = useCallback(async (service, position, radius, keywords) => {
+    for (const keyword of keywords) {
+      try {
+        const results = await new Promise((resolve) => {
+          service.nearbySearch({
+            location: position,
+            radius: radius.toString(),
+            type: 'hospital',
+            keyword: keyword,
+            language: 'ja'
+          }, (results, status) => {
+            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+              resolve({ success: true, data: results });
+            } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+              resolve({ success: false, data: [] });
+            } else {
+              resolve({ success: false, error: status });
+            }
+          });
+        });
+
+        if (results.success && results.data.length > 0) {
+          return results.data;
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+      }
+    }
+    return null;
+  }, []);
+
+  const searchNearbyHospitals = useCallback(async (initialRadius = 5000) => {
+    if (!mapRef.current || !currentPosition || !window.google) return;
+
+    setIsSearching(true);
+    const service = new window.google.maps.places.PlacesService(mapRef.current);
+    const keywords = getDepartmentKeywords(department);
+    const radii = [initialRadius, 10000, 20000];
+
+    for (const radius of radii) {
+      const results = await searchHospitalsWithKeywords(service, currentPosition, radius, keywords);
+      if (results) {
+        setHospitals(results);
+        setSearchRadius(radius);
+        setIsSearching(false);
+        return;
+      }
+    }
+
+    setIsSearching(false);
+    setHospitals([]);
+    onError(`${radius}m圏内に${department}が見つかりませんでした。検索範囲を広げて再試行できます。`);
+  }, [currentPosition, department, searchHospitalsWithKeywords]);
 
   const getLocation = useCallback(async () => {
     if (!navigator.geolocation) {
@@ -82,7 +153,6 @@ export function HospitalMap({ department, onError }) {
         console.error('Geolocation error:', error);
         setLoading(false);
 
-        // iOSデバイス向けのカスタマイズされたエラーメッセージ
         if (isIOS) {
           const browserSpecificMessage = isChrome 
             ? 'Chrome'
@@ -135,28 +205,6 @@ export function HospitalMap({ department, onError }) {
 
     return steps;
   }, [browserName, isChrome]);
-
-  // 近くの病院を検索
-  const searchNearbyHospitals = useCallback(async () => {
-    if (!mapRef.current || !currentPosition || !window.google) return;
-
-    const service = new window.google.maps.places.PlacesService(mapRef.current);
-    const request = {
-      location: currentPosition,
-      radius: '5000',
-      type: 'hospital',
-      keyword: department
-    };
-
-    service.nearbySearch(request, (results, status) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        setHospitals(results);
-      } else {
-        onError('病院情報の取得に失敗しました');
-        console.error('Places API error:', status);
-      }
-    });
-  }, [currentPosition, department]);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
@@ -227,51 +275,73 @@ export function HospitalMap({ department, onError }) {
   return (
     <div className="w-full">
       <h3 className="text-xl font-bold text-purple-600 mb-4">
-        近くの病院
+        近くの{department}
       </h3>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={currentPosition}
-        zoom={14}
-        onLoad={onLoad}
-      >
-        <Marker
-          position={currentPosition}
-          icon={customMarkers.currentLocation}
-        />
-        {hospitals.map((hospital) => (
+      <div className="relative">
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={currentPosition}
+          zoom={14}
+          onLoad={onLoad}
+        >
           <Marker
-            key={hospital.place_id}
-            position={hospital.geometry.location}
-            icon={customMarkers.hospital}
-            onClick={() => setSelectedHospital(hospital)}
+            position={currentPosition}
+            icon={customMarkers.currentLocation}
           />
-        ))}
-        {selectedHospital && (
-          <InfoWindow
-            position={selectedHospital.geometry.location}
-            onCloseClick={() => setSelectedHospital(null)}
-          >
-            <div className="p-2">
-              <h4 className="font-bold text-lg">{selectedHospital.name}</h4>
-              <p className="text-sm text-gray-600">{selectedHospital.vicinity}</p>
-              {selectedHospital.rating && (
-                <p className="text-sm">評価: {selectedHospital.rating}⭐</p>
-              )}
-              <div className="mt-2">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedHospital.geometry.location.lat()},${selectedHospital.geometry.location.lng()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-700 text-sm flex items-center gap-1"
-                >
-                  ルートを表示 <span className="text-lg">🗺️</span>
-                </a>
+          {hospitals.map((hospital) => (
+            <Marker
+              key={hospital.place_id}
+              position={hospital.geometry.location}
+              icon={customMarkers.hospital}
+              onClick={() => setSelectedHospital(hospital)}
+            />
+          ))}
+          {selectedHospital && (
+            <InfoWindow
+              position={selectedHospital.geometry.location}
+              onCloseClick={() => setSelectedHospital(null)}
+            >
+              <div className="p-2">
+                <h4 className="font-bold text-lg">{selectedHospital.name}</h4>
+                <p className="text-sm text-gray-600">{selectedHospital.vicinity}</p>
+                {selectedHospital.rating && (
+                  <p className="text-sm">評価: {selectedHospital.rating}⭐</p>
+                )}
+                <div className="mt-2">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedHospital.geometry.location.lat()},${selectedHospital.geometry.location.lng()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-700 text-sm flex items-center gap-1"
+                  >
+                    ルートを表示 <span className="text-lg">🗺️</span>
+                  </a>
+                </div>
               </div>
-            </div>
-          </InfoWindow>
+            </InfoWindow>
+          )}
+        </GoogleMap>
+
+        {isSearching && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
+            <div className="animate-spin text-4xl">🏥</div>
+          </div>
         )}
-      </GoogleMap>
+      </div>
+
+      {hospitals.length === 0 && !loading && !isSearching && (
+        <div className="text-center mt-4">
+          <p className="text-gray-600">
+            {searchRadius}m圏内に{department}が見つかりませんでした
+          </p>
+          <button
+            onClick={() => searchNearbyHospitals(searchRadius * 2)}
+            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            検索範囲を広げて再検索
+          </button>
+        </div>
+      )}
     </div>
   );
 }
