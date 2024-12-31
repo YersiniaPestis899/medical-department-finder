@@ -102,4 +102,4 @@ medical-department-finder/
 ## 👥 作者
 
 - GitHub: [@YersiniaPestis899](https://github.com/YersiniaPestis899)
-- Qiita: [プログラミング超初心者がAIと二人三脚でWEBアプリ作ってみた](https://qiita.com/YersiniaPestis899/items/dc73d0c42a3592c11587)
+- Qiita: [プログラミング超初心者がAIと二人三脚でWEBアプリ作ってみた](https://qiita.com/YersiniaPestis899/items/fed3e10a7b662378a634)
