@@ -50,9 +50,16 @@ npm install
 ```
 
 3. 環境変数の設定
+`.env.example`ファイルを`.env`にコピーし、必要な環境変数を設定します：
 ```bash
 cp .env.example .env
-# .envファイルを編集し、必要な環境変数を設定
+```
+
+必要な環境変数:
+```env
+AWS_REGION=us-west-2
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
 ```
 
 4. 開発サーバーの起動
@@ -95,10 +102,4 @@ medical-department-finder/
 ## 👥 作者
 
 - GitHub: [@YersiniaPestis899](https://github.com/YersiniaPestis899)
-- Qiita: [記事リンク]
-
-## 📚 参考資料
-
-- [React Documentation](https://reactjs.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
-- [AWS Bedrock Documentation](https://aws.amazon.com/bedrock/)
+- Qiita: [プログラミング超初心者がAIと二人三脚でWEBアプリ作ってみた](https://qiita.com/YersiniaPestis899/items/dc73d0c42a3592c11587)
