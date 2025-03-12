@@ -1,6 +1,6 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-const CLAUDE_MODEL = 'anthropic.claude-3-5-sonnet-20241022-v2:0';
+const CLAUDE_MODEL = 'anthropic.claude-3-7-sonnet-20250219-v1:0';
 
 function debugEnvironmentVariables() {
   console.log('Environment Variables Debug:', {

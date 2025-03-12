@@ -3,7 +3,7 @@ const AWS_SECRET_ACCESS_KEY = import.meta.env.AWS_SECRET_ACCESS_KEY;
 const AWS_REGION = import.meta.env.AWS_REGION;
 
 // AWS Bedrock APIのエンドポイント構築
-const BEDROCK_ENDPOINT = `https://bedrock-runtime.${AWS_REGION}.amazonaws.com/model/anthropic.claude-3-5-sonnet-20241022-v2:0/invoke`;
+const BEDROCK_ENDPOINT = `https://bedrock-runtime.${AWS_REGION}.amazonaws.com/model/anthropic.claude-3-7-sonnet-20250219-v1:0/invoke`;
 
 export async function analyzeSymptomsWithBedrock(symptoms, age) {
   const ageGroup = getAgeGroup(age);
