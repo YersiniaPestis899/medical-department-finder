@@ -1,9 +1,6 @@
-const AWS_ACCESS_KEY_ID = import.meta.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = import.meta.env.AWS_SECRET_ACCESS_KEY;
-const AWS_REGION = import.meta.env.AWS_REGION;
+import { invokeClaudeModel } from './bedrockClient';
 
-// AWS Bedrock APIのエンドポイント構築
-const BEDROCK_ENDPOINT = `https://bedrock-runtime.${AWS_REGION}.amazonaws.com/model/anthropic.claude-3-7-sonnet-20250219-v1:0/invoke`;
+const AWS_REGION = import.meta.env.AWS_REGION || 'us-west-2';
 
 export async function analyzeSymptomsWithBedrock(symptoms, age) {
   const ageGroup = getAgeGroup(age);
@@ -30,64 +27,18 @@ ${symptoms.map(s => s.additionalInfo || '').filter(Boolean).join('\n')}
 }`;
 
   try {
-    if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_REGION) {
-      throw new Error('AWS credentials not configured');
-    }
+    // bedrockClient.jsのinvokeClaudeModel関数を使用
+    console.log('Using Claude model for analysis with prompt:', prompt);
+    const response = await invokeClaudeModel(prompt);
+    console.log('Claude model response:', response);
+    return JSON.parse(response);
 
-    // AWS署名バージョン4の生成
-    const datetime = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
-    const date = datetime.substr(0, 8);
-
-    // リクエストボディの準備
-    const requestBody = JSON.stringify({
-      "anthropic_version": "bedrock-2023-05-31",
-      "max_tokens": 1000,
-      "top_k": 250,
-      "stop_sequences": [],
-      "temperature": 0.7,
-      "top_p": 0.999,
-      "messages": [
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": prompt
-            }
-          ]
-        }
-      ]
-    });
-
-    const response = await fetch(BEDROCK_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Amz-Date': datetime,
-        'Authorization': await generateAWSSignature(
-          'POST',
-          BEDROCK_ENDPOINT,
-          requestBody,
-          datetime,
-          date
-        ),
-      },
-      body: requestBody
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    return JSON.parse(data.content[0].text);
   } catch (error) {
     console.error('Bedrock API error:', error);
     // フォールバック処理
     return {
-      recommendedDepartment: symptoms[0].departments[0],
-      alternativeDepartments: symptoms[0].departments.slice(1),
+      recommendedDepartment: symptoms[0].departments[0] || '一般内科',
+      alternativeDepartments: symptoms[0].departments ? symptoms[0].departments.slice(1) : ['内科', '総合診療科'],
       urgencyLevel: 2,
       recommendations: [
         'できるだけ早めに医療機関を受診してください。',
@@ -98,18 +49,6 @@ ${symptoms.map(s => s.additionalInfo || '').filter(Boolean).join('\n')}
       additionalNotes: getAgeGroup(age).defaultNote
     };
   }
-}
-
-// AWS署名バージョン4の生成関数
-async function generateAWSSignature(method, url, body, datetime, date) {
-  // AWS Signature V4の実装
-  // 注: 実際の実装ではAWS SDKを使用することを推奨
-  const region = AWS_REGION;
-  const service = 'bedrock';
-  
-  // 署名の実装は複雑なため、AWS SDKまたは専用のライブラリの使用を推奨
-  // ここでは簡略化された例を示しています
-  return `AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID}/${date}/${region}/${service}/aws4_request`;
 }
 
 function getAgeGroup(age) {
