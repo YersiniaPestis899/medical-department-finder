@@ -1,6 +1,7 @@
 import { invokeClaudeModel } from './bedrockClient';
 
-const AWS_REGION = import.meta.env.AWS_REGION || 'us-west-2';
+// Vite環境変数とVercel環境変数の両方に対応
+const AWS_REGION = import.meta.env.VITE_AWS_REGION || import.meta.env.AWS_REGION || 'us-west-2';
 
 export async function analyzeSymptomsWithBedrock(symptoms, age) {
   const ageGroup = getAgeGroup(age);

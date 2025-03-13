@@ -3,25 +3,36 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 const CLAUDE_MODEL = 'anthropic.claude-3-7-sonnet-20250219-v1:0';
 
 function debugEnvironmentVariables() {
+  // Vite環境変数とVercel環境変数の両方をチェック
   console.log('Environment Variables Debug:', {
-    REGION: import.meta.env.AWS_REGION,
-    ACCESS_KEY_EXISTS: !!import.meta.env.AWS_ACCESS_KEY_ID,
-    SECRET_KEY_EXISTS: !!import.meta.env.AWS_SECRET_ACCESS_KEY,
-    ALL_ENV: import.meta.env
+    REGION: import.meta.env.VITE_AWS_REGION || import.meta.env.AWS_REGION,
+    ACCESS_KEY_EXISTS: !!(import.meta.env.VITE_AWS_ACCESS_KEY_ID || import.meta.env.AWS_ACCESS_KEY_ID),
+    SECRET_KEY_EXISTS: !!(import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || import.meta.env.AWS_SECRET_ACCESS_KEY),
+    ENVIRONMENT: import.meta.env.MODE || process.env.NODE_ENV || 'unknown',
+    VERCEL_ENV: import.meta.env.VERCEL_ENV || process.env.VERCEL_ENV || 'not-vercel'
   });
 }
 
 export async function invokeClaudeModel(prompt) {
   debugEnvironmentVariables();
 
-  const region = import.meta.env.AWS_REGION || 'us-west-2';
+  // Vercel環境とローカル環境の両方に対応
+  const region = import.meta.env.VITE_AWS_REGION || import.meta.env.AWS_REGION || 'us-west-2';
+  const accessKeyId = import.meta.env.VITE_AWS_ACCESS_KEY_ID || import.meta.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || import.meta.env.AWS_SECRET_ACCESS_KEY;
+  
   console.log('Using AWS Region:', region);
+  console.log('AWS Credentials Available:', !!accessKeyId && !!secretAccessKey);
+  
+  if (!accessKeyId || !secretAccessKey) {
+    console.error('AWS credentials are missing. Check Vercel environment variables.');
+  }
 
   const client = new BedrockRuntimeClient({
     region,
     credentials: {
-      accessKeyId: import.meta.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: import.meta.env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId,
+      secretAccessKey,
     },
   });
 
@@ -48,13 +59,26 @@ export async function invokeClaudeModel(prompt) {
     };
 
     const command = new InvokeModelCommand(input);
+    console.log('Sending request to AWS Bedrock with model:', CLAUDE_MODEL);
     const response = await client.send(command);
 
     const responseBody = new TextDecoder().decode(response.body);
-    console.log('Raw response from Bedrock:', responseBody);
+    console.log('Response received from Bedrock');
+    // セキュリティ上の理由からレスポンス全体をログに出力しない
+    console.log('Response length:', responseBody.length);
     
-    const parsedResponse = JSON.parse(responseBody);
-    return parsedResponse.content[0].text;
+    try {
+      const parsedResponse = JSON.parse(responseBody);
+      if (parsedResponse.content && parsedResponse.content[0] && parsedResponse.content[0].text) {
+        return parsedResponse.content[0].text;
+      } else {
+        console.error('Unexpected response structure:', JSON.stringify(parsedResponse, null, 2));
+        throw new Error('Invalid response structure from Bedrock');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Bedrock response:', parseError);
+      throw new Error(`Response parsing failed: ${parseError.message}`);
+    }
   } catch (error) {
     console.error('Detailed Bedrock API error:', error);
     throw error;
